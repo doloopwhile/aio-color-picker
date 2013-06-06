@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<script src='../js-object-clone/object-clone.js'></script>
 <script src='../jquery-2.0.0.js'></script>
 <script src='../js/aio-color-picker.js'></script>
 <title>aio-color-picker/Simple Example</title>
@@ -12,20 +13,76 @@ $(function() {
   $('#rgb5').colorPicker({format: ['name', 'hex3']});
   $('#rgb6').colorPicker({format: ['name', 'rgb']});
 
+  $('#red').colorPicker({type: 'red'});
+  $('#green').colorPicker({type: 'green'});
+  $('#blue').colorPicker({type: 'blue'});
+
   $('#rgb1').colorPicker('css').on('ColorChange', function(event, color) {
-    $('input[type=text][readonly=readonly]').color(color);
+    $('input[type=text][readonly=readonly], #red, #green, #blue').color(color);
   });
 });
 </script>
+<style>
+table {
+  border: solid gray 1px;
+  border-collapse: collapse;
+}
+
+table.sample {
+  float: left;
+}
+
+th {
+  text-align: left;
+}
+
+td, th {
+  border: solid gray 1px;
+}
+
+footer {
+  clear: both;
+}
+</style>
 </head>
 <body>
-<input type="text" id="rgb1" />
-<input type="text" id="rgb2" readonly="readonly" />
-<input type="text" id="rgb3" readonly="readonly" />
-<input type="text" id="rgb4" readonly="readonly" />
-<input type="text" id="rgb5" readonly="readonly" />
-<input type="text" id="rgb6" readonly="readonly" />
-<div>
+<table class="sample">
+  <tr>
+    <th colspan="2">
+      Edittable
+  <tr>
+    <th>Full
+    <td><input type="text" id="rgb1" class="ColorPicker" />
+  <tr>
+    <th>Red
+    <td><input type="text" id="red" class="ColorPicker" />
+  <tr>
+    <th>Green
+    <td><input type="text" id="green" class="ColorPicker" />
+  <tr>
+    <th>Blue
+    <td><input type="text" id="blue" class="ColorPicker" />
+</table>
+<table class="sample">
+  <tr>
+    <th colspan="2">Read Only
+  <tr>
+    <th>rgb(rrr, ggg, bbb)
+    <td><input type="text" id="rgb2" readonly="readonly" class="ColorPicker" />
+  <tr>
+    <th>#RGB or #RRGGBB
+    <td><input type="text" id="rgb3" readonly="readonly" class="ColorPicker" />
+  <tr>
+    <th>Name
+    <td><input type="text" id="rgb4" readonly="readonly" class="ColorPicker" />
+  <tr>
+    <th>Name or #XYZ or #RRGGBB
+    <td><input type="text" id="rgb5" readonly="readonly" class="ColorPicker" />
+  <tr>
+    <th>Name or rgb()
+    <td><input type="text" id="rgb6" readonly="readonly" class="ColorPicker" />
+</table>
+
 <footer>
 <a href="https://github.com/doloopwhile/aio-color-picker">
 https://github.com/doloopwhile/aio-color-picker
