@@ -4,9 +4,28 @@
 <script src='../jquery-2.0.0.js'></script>
 <script src='../js/aio-color-picker.js'></script>
 <title>aio-color-picker/Simple Example</title>
+<script>
+$(function() {
+  $('#rgb2').colorPicker({format: 'rgb'});
+  $('#rgb3').colorPicker({format: 'hex3'});
+  $('#rgb4').colorPicker({format: 'name'});
+  $('#rgb5').colorPicker({format: ['name', 'hex3']});
+  $('#rgb6').colorPicker({format: ['name', 'rgb']});
+
+  $('#rgb1').colorPicker('css').on('ColorChange', function(event, color) {
+    $('input[type=text][readonly=readonly]').color(color);
+  });
+});
+</script>
 </head>
 <body>
-
+<input type="text" id="rgb1" />
+<input type="text" id="rgb2" readonly="readonly" />
+<input type="text" id="rgb3" readonly="readonly" />
+<input type="text" id="rgb4" readonly="readonly" />
+<input type="text" id="rgb5" readonly="readonly" />
+<input type="text" id="rgb6" readonly="readonly" />
+<div>
 <footer>
 <a href="https://github.com/doloopwhile/aio-color-picker">
 https://github.com/doloopwhile/aio-color-picker
