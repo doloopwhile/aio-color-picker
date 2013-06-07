@@ -8,6 +8,9 @@ do (jQuery) =>
     return max if x > max
     return x
 
+  is_enter_key = (e) =>
+    (e.which? and e.which == 13) or (e.keycode? and e.keycode == 13)
+
   $.fn.colorPicker  = (options) ->
     $elements = this
     options = $.extend({
@@ -25,35 +28,85 @@ do (jQuery) =>
         if $.type(format) != 'array'
           format = [format]
 
-        input_changed = (input) =>
-          $(input).color(Color.fromCSS($(input).val()))
-
         # 設定情報の構築
         $elements.filter('input[type=text]').each ->
+          text_color = =>
+            Color.fromCSS($(this).val())
+
           $(this)
             .data(DataName, new Color)
-            .data 'update_value', (color) ->
-              if Color.fromCSS($(this).val())?.equals(color)
+
+            .data 'update_value', (color) =>
+              if text_color()?.equals(color)
                 return
+
               name = (color.name() if 'name' in format)
               hex3 = (color.hex3() if 'hex3' in format)
-              rgb  =  (color.rgb() if 'rgb' in format)
+              rgb  = (color.rgb() if 'rgb' in format)
               $(this).val(name ? hex3 ? rgb ? color.hex())
-            .on 'change', ->
-              input_changed(this)
-            .on 'keypress', (e) ->
-               if (e.which? and e.which == 13) or (e.keycode? and e.keycode == 13)
-                input_changed(this)
+
+            .data 'update_color', (color) =>
+              new_color = color.override($(this).color())
+
+              if text_color()? and new_color.equals($(this).color())
+                return
+
+              $(this).data(DataName, new_color)
+              $(this).data('update_value').call(this, new_color)
+              $(this).trigger(EventName, new_color)
+
+            .on 'change', =>
+              color = text_color()
+              if color? and not color.equals($(this).color())
+                $(this).data('update_color')(color)
 
       when 'red', 'green', 'blue'
-        # 設定情報の構築
+        options = $.extend({
+          format: 'decimal'
+        }, options)
+
+        radix =
+          if options.format == 'hex'
+            16
+          else
+            10
+
         $elements.filter('input[type=text]').each ->
+          text_partial_color = =>
+            v = parseInt($(this).val(), radix)
+            if isNaN(v)
+              null
+            else
+              createPartialColor(type, v)
+
           $(this)
-            .data(DataName, new PartialColor())
-            .data 'update_value', (color) ->
-              $(this).val(color.red() ? '') if type == 'red'
-              $(this).val(color.green() ? '') if type == 'green'
-              $(this).val(color.blue() ? '') if type == 'blue'
+            .data(DataName, createPartialColor(type, 0))
+
+            .data 'update_value', (color) =>
+              if text_partial_color()?.equals(color)
+                return
+
+              v = (color.get(type) ? 0).toString(radix)
+              if options.format == 'hex'
+                v = ('00' + v).slice(-2)
+              $(this).val(v)
+
+            .data 'update_color', (color) =>
+              if not color.get(type)?
+                return
+
+              new_color = color.partial(type)
+              if text_partial_color()? and new_color.equals($(this).color())
+                return
+              $(this).data(DataName, new_color)
+              $(this).data('update_value').call(this, new_color)
+              $(this).trigger('PartialColorChange', new_color)
+
+            .on 'change', =>
+              partial_color = text_partial_color()
+              if partial_color? and not partial_color.equals($(this).color())
+                $(this).color(partial_color)
+
 
   $.fn.color = (color) ->
     unless color?
@@ -63,38 +116,17 @@ do (jQuery) =>
       color = Color.fromCSS(color)
 
     this.each ->
-      old_color = $(this).color()
-      # new_color = color.overide(old_color)
-      new_color = color
-      return if new_color.equals(old_color)
-
-      $(this).data(DataName, new_color)
-      $(this).data('update_value').call(this, new_color)
-      $(this).trigger(EventName, new_color)
+      $(this).data('update_color')(color)
 
     return this
 
 
-  class AbstractColor
-    red: -> @r
-    green: -> @g
-    blue: -> @b
-    alpha: -> @a
-
-    equals: (other) ->
-      (   @r == other.r \
-      and @g == other.g \
-      and @b == other.b \
-      and @a == other.a)
-
-    clone: ->
-      Object.clone(this)
-
-
-  class Color extends AbstractColor
+  class Color
     constructor: (r=0, g=0, b=0, a=1.0) ->
-      [@r, @g, @b] = (in_range(parseInt(x), 0, 255) for x in [r, g, b])
-      @a = in_range(parseFloat(a), 0, 1)
+      @r = toByteValue(r)
+      @g = toByteValue(g)
+      @b = toByteValue(b)
+      @a = toUnitValue(a)
 
     @fromCSS: (color_string) ->
       color_string = color_string.trim()
@@ -132,6 +164,7 @@ do (jQuery) =>
           return d.process(m)
       return null
 
+    # 文字列変換関数
     hex: ->
       r = @r.toString(16)
       g = @g.toString(16)
@@ -159,26 +192,87 @@ do (jQuery) =>
           return name
       null
 
-    override: (color) ->
-      @clone()
-
     @simple_colors = =>
       SimpleColors
 
+    # 合成処理関連
+    get: (element_name) ->
+      switch element_name.toLowerCase()
+        when 'red'   then @r
+        when 'green' then @g
+        when 'blue'  then @b
+        when 'alpha' then @a
 
-  class PartialColor extends AbstractColor
-    constructor: (r, g, b, a) ->
-      @r = in_range(parseInt(x), 0, 255) if r?
-      @g = in_range(parseInt(x), 0, 255) if g?
-      @b = in_range(parseInt(x), 0, 255) if b?
-      @a = in_range(parseFloat(x), 0, 1) if a?
+    partial: (element_name) ->
+      createPartialColor(element_name, @get(element_name))
 
     override: (color) ->
-      color = color.clone()
-      color.r = @r if @r?
-      color.g = @g if @g?
-      color.b = @b if @b?
+      Object.clone(this)
 
+    replace: (element_name, value) ->
+      color = Object.clone(this)
+      switch element_name
+        when 'red'
+          color.r = value
+        when 'blue'
+          color.b = value
+        when 'green'
+          color.g = value
+        when 'alpha'
+          color.a = value
+      color
+
+    equals: (other) ->
+      Object.equals(this, other)
+
+
+  class PartialColor
+    constructor: (@element_name, @value) ->
+
+    get: (element_name) ->
+      if @element_name == element_name
+        @value
+      else
+        null
+
+    partial: (element_name) ->
+      if @element_name == element_name
+        Object.clone(this)
+      else
+        createPartialColor(element_name)
+
+    override: (color) ->
+      color.replace(@element_name, @value)
+
+    replace: (element_name, value) ->
+      color = Object.clone(this)
+      if element_name == @element_name
+        color.value = value
+      color
+
+    equals: (other) ->
+      Object.equals(this, other)
+
+  toByteValue = (v) =>
+    v = parseInt(v)
+    v = 0 if isNaN(v)
+    in_range(v, 0, 255)
+
+  toUnitValue = (v) =>
+    v = parseFloat(v)
+    v = 0 if isNaN(v)
+    in_range(v, 0, 1)
+
+  createPartialColor = (element_name, value) =>
+    element_name = element_name.toLowerCase()
+    switch element_name
+      when 'red', 'green', 'blue'
+        value = toByteValue(value)
+      when 'alpha'
+        value = toUnitValue(value)
+      else
+        return null
+    new PartialColor(element_name, value)
 
   SimpleColors = {
     aliceblue: "#f0f8ff"
