@@ -26,10 +26,10 @@ $(function() {
 
   $('#rgb1, #rgb1-2').colorPicker();
 
-  $('.ColorPicker').on('ColorChange', function(event, color) {
-     $('.ColorPicker').color(color);
+  $('#rgb1').on('ColorChange', function(event, color) {
+     $('.ColorPicker').not('#rgb1').color(color);
   });
-  $('.ColorPicker').on('PartialColorChange', function(event, color) {
+  $('.ColorPicker').not('#rgb1').on('ColorChange', function(event, color) {
      $('#rgb1').color(color);
   });
 });

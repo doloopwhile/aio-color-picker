@@ -19,11 +19,10 @@ do (jQuery) =>
 
     type = options.type
     switch type
-      when 'css'
+      when 'css', 'red', 'green', 'blue', 'alpha', 'hue', 'saturation', 'value'
         options = $.extend({
           format: ['hex']
         }, options)
-
         format = options.format
         if $.type(format) != 'array'
           format = [format]
@@ -31,19 +30,31 @@ do (jQuery) =>
         # 設定情報の構築
         $elements.filter('input[type=text]').each ->
           text_color = =>
-            Color.fromCSS($(this).val())
+            switch type
+              when 'css'
+                Color.fromCSS($(this).val())
+              when 'red', 'green', 'blue'
+                v = parseInt($(this).val())
+                $(this).color().replace(type, v)
+              when 'alpha', 'hue', 'saturation', 'value'
+                v = parseFloat($(this).val())
+                $(this).color().replace(type, v)
+
+          update_value = (color) =>
+            if text_color()?.equals(color)
+              return
+
+            switch type
+              when 'css'
+                name = (color.name() if 'name' in format)
+                hex3 = (color.hex3() if 'hex3' in format)
+                rgb  = (color.rgb() if 'rgb' in format)
+                $(this).val(name ? hex3 ? rgb ? color.hex())
+              else
+                $(this).val(color.get(type))
 
           $(this)
             .data(DataName, new Color)
-
-            .data 'update_value', (color) =>
-              if text_color()?.equals(color)
-                return
-
-              name = (color.name() if 'name' in format)
-              hex3 = (color.hex3() if 'hex3' in format)
-              rgb  = (color.rgb() if 'rgb' in format)
-              $(this).val(name ? hex3 ? rgb ? color.hex())
 
             .data 'update_color', (color) =>
               new_color = color.override($(this).color())
@@ -52,60 +63,18 @@ do (jQuery) =>
                 return
 
               $(this).data(DataName, new_color)
-              $(this).data('update_value').call(this, new_color)
+              update_value(new_color)
               $(this).trigger(EventName, new_color)
 
             .on 'change', =>
-              color = text_color()
-              if color? and not color.equals($(this).color())
-                $(this).data('update_color')(color)
+              new_color = text_color()
 
-      when 'red', 'green', 'blue', 'alpha', 'hue', 'saturation', 'value'
-        options = $.extend({
-          format: 'decimal'
-        }, options)
-
-        radix =
-          if options.format == 'hex'
-            16
-          else
-            10
-
-        $elements.filter('input[type=text]').each ->
-          text_partial_color = =>
-            v = parseInt($(this).val(), radix)
-            if isNaN(v)
-              null
-            else
-              createPartialColor(type, v)
-
-          $(this)
-            .data(DataName, createPartialColor(type, 0))
-
-            .data 'update_value', (color) =>
-              if text_partial_color()?.equals(color)
+              if not text_color()?
+                return
+              if new_color.equals($(this).color())
                 return
 
-              v = (color.get(type) ? 0).toString(radix)
-              if options.format == 'hex'
-                v = ('00' + v).slice(-2)
-              $(this).val(v)
-
-            .data 'update_color', (color) =>
-              if not color.get(type)?
-                return
-
-              new_color = color.partial(type)
-              if text_partial_color()? and new_color.equals($(this).color())
-                return
-              $(this).data(DataName, new_color)
-              $(this).data('update_value').call(this, new_color)
-              $(this).trigger('PartialColorChange', new_color)
-
-            .on 'change', =>
-              partial_color = text_partial_color()
-              if partial_color? and not partial_color.equals($(this).color())
-                $(this).color(partial_color)
+              $(this).data('update_color')(new_color)
 
 
   $.fn.color = (color) ->
@@ -115,7 +84,6 @@ do (jQuery) =>
     if jQuery.type(color) == "string"
       color = Color.fromCSS(color)
 
-    console.log this, color
     this.each ->
       $(this).data('update_color')(color)
 
