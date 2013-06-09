@@ -19,6 +19,10 @@ $(function() {
   $('#green-hex').colorPicker({type: 'green', format: 'hex'});
   $('#blue').colorPicker({type: 'blue'});
   $('#blue-hex').colorPicker({type: 'blue', format: 'hex'});
+  $('#alpha').colorPicker({type: 'alpha'});
+  $('#hue').colorPicker({type: 'hue'});
+  $('#saturation').colorPicker({type: 'saturation'});
+  $('#value').colorPicker({type: 'value'});
 
   $('#rgb1, #rgb1-2').colorPicker();
 
@@ -73,6 +77,18 @@ footer {
     <th>Blue
     <td><input type="text" id="blue" class="ColorPicker" />
     <td><input type="text" id="blue-hex" class="ColorPicker" />
+  <tr>
+    <th>Alpha
+    <td><input type="text" id="alpha" class="ColorPicker" />
+  <tr>
+    <th>Hue
+    <td><input type="text" id="hue" class="ColorPicker" />
+  <tr>
+    <th>Saturation
+    <td><input type="text" id="saturation" class="ColorPicker" />
+  <tr>
+    <th>Value
+    <td><input type="text" id="value" class="ColorPicker" />
 </table>
 <table class="sample">
   <tr>

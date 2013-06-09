@@ -60,7 +60,7 @@ do (jQuery) =>
               if color? and not color.equals($(this).color())
                 $(this).data('update_color')(color)
 
-      when 'red', 'green', 'blue'
+      when 'red', 'green', 'blue', 'alpha', 'hue', 'saturation', 'value'
         options = $.extend({
           format: 'decimal'
         }, options)
@@ -115,6 +115,7 @@ do (jQuery) =>
     if jQuery.type(color) == "string"
       color = Color.fromCSS(color)
 
+    console.log this, color
     this.each ->
       $(this).data('update_color')(color)
 
@@ -197,11 +198,18 @@ do (jQuery) =>
 
     # 合成処理関連
     get: (element_name) ->
-      switch element_name.toLowerCase()
+      e = element_name.toLowerCase()
+      switch e
         when 'red'   then @r
         when 'green' then @g
         when 'blue'  then @b
         when 'alpha' then @a
+        when 'hue', 'saturation', 'value'
+          [h, s, v] = rgb_to_hsv(@r, @g, @b)
+          switch e
+            when 'hue'        then h
+            when 'saturation' then s
+            when 'value'      then v
 
     partial: (element_name) ->
       createPartialColor(element_name, @get(element_name))
@@ -210,8 +218,9 @@ do (jQuery) =>
       Object.clone(this)
 
     replace: (element_name, value) ->
+      e = element_name.toLowerCase()
       color = Object.clone(this)
-      switch element_name
+      switch e
         when 'red'
           color.r = value
         when 'blue'
@@ -220,6 +229,16 @@ do (jQuery) =>
           color.g = value
         when 'alpha'
           color.a = value
+        when 'hue', 'saturation', 'value'
+          [h, s, v] = rgb_to_hsv(@r, @g, @b)
+          switch e
+            when 'hue'
+              h = value
+            when 'saturation'
+              s = value
+            when 'value'
+              v = value
+          [color.r, color.g, color.b] = hsv_to_rgb(h, s, v)
       color
 
     equals: (other) ->
@@ -263,12 +282,49 @@ do (jQuery) =>
     v = 0 if isNaN(v)
     in_range(v, 0, 1)
 
+  rgb_to_hsv = (r, g, b) =>
+    [r, g, b] = [r / 255, g / 255, b / 255]
+    maxc = Math.max(r, g, b)
+    minc = Math.min(r, g, b)
+    v = maxc
+    if minc == maxc
+      return [0.0, 0.0, v]
+    s = (maxc - minc) / maxc
+    rc = (maxc - r) / (maxc - minc)
+    gc = (maxc - g) / (maxc - minc)
+    bc = (maxc - b) / (maxc - minc)
+    if r == maxc
+        h = bc - gc
+    else if g == maxc
+        h = 2.0 + rc - bc
+    else
+        h = 4.0 + gc - rc
+    h = (h / 6.0) % 1.0
+    return [h, s, v]
+
+  hsv_to_rgb = (h, s, v) =>
+    v *= 255
+    if s == 0.0
+      [v, v, v]
+    i = parseInt(h * 6.0)
+    f = (h * 6.0) - i
+    p = v * (1.0 - s)
+    q = v * (1.0 - s * f)
+    t = v * (1.0 - s * (1.0-f))
+    switch i % 6
+      when 0 then [v, t, p]
+      when 1 then [q, v, p]
+      when 2 then [p, v, t]
+      when 3 then [p, q, v]
+      when 4 then [t, p, v]
+      else [v, p, q]
+
   createPartialColor = (element_name, value) =>
     element_name = element_name.toLowerCase()
     switch element_name
       when 'red', 'green', 'blue'
         value = toByteValue(value)
-      when 'alpha'
+      when 'alpha', 'hue', 'saturation', 'value'
         value = toUnitValue(value)
       else
         return null
