@@ -6,36 +6,35 @@ do (jQuery) =>
   GroupRoots = {}
 
   $.fn.colorPicker  = (options) ->
-    $elements = this
-    options = $.extend({
-      type: 'css',
-    }, options)
+    $elements = []
 
     initial_color = new Color
-    switch options.type
-      when 'css', 'red', 'green', 'blue', 'alpha', 'hue', 'saturation', 'value'
-        options = $.extend({
-          format: ['hex']
-        }, options)
-        if $.type(options.format) != 'array'
-          options.format = [options.format]
+    this.each ->
+      if not $(this).is('input[type=text]')
+        return
 
-        # 設定情報の構築
-        $elements.filter('input[type=text]').each ->
-          $(this)
-            .data(DataName, new ColorDomImpl(this, initial_color, options))
-            .on 'change', ->
-              $(this).data(DataName).onChange()
+      dom_options = $.extend({
+        type: $(this).data('color-type') ? 'css',
+        group: $(this).data('color-group'),
+        format: $(this).data('color-format')
+      }, options)
 
-    if not options.group?
-      return
+      if $.type(dom_options.format) != 'array'
+        dom_options.format = [dom_options.format]
 
-    root = GroupRoots[options.group] ?= new ColorHolder(initial_color)
+      # 設定情報の構築
+      $(this)
+        .data(DataName, new ColorDomImpl(this, initial_color, dom_options))
+        .on 'change', ->
+          $(this).data(DataName).onChange()
 
-    $(root).on EventName, (event, color) =>
-      $elements.color(color)
-    $elements.on EventName, (event, color) =>
-      root.update_color(color)
+      if not dom_options.group?
+        return
+
+      root = GroupRoots[dom_options.group] ?= new ColorHolder(initial_color)
+
+      $(root).on EventName, (event, color) => $(this).color(color)
+      $(this).on EventName, (event, color) => root.updateColor(color)
 
   $.fn.color = (color) ->
     unless color?
@@ -101,6 +100,11 @@ do (jQuery) =>
           hex3 = (color.hex3() if 'hex3' in @_options.format)
           rgb  = (color.rgb() if 'rgb' in @_options.format)
           $(@_dom).val(name ? hex3 ? rgb ? color.hex())
+        when 'red', 'green', 'blue'
+          v = color.get(@_options.type)
+          if 'hex' in  @_options.format
+            v = ('00' + v.toString(16)).slice(-2)
+          $(@_dom).val(v)
         else
           $(@_dom).val(color.get(@_options.type))
 

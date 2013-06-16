@@ -7,28 +7,8 @@
 <title>aio-color-picker/Simple Example</title>
 <script type="text/javascript">
 $(function() {
-  $('#rgb2').colorPicker({group: 1, format: 'rgb'});
-  $('#rgb3').colorPicker({group: 1, format: 'hex3'});
-  $('#rgb4').colorPicker({group: 1, format: 'name'});
-  $('#rgb5').colorPicker({group: 1, format: ['name', 'hex3']});
-  $('#rgb6').colorPicker({group: 1, format: ['name', 'rgb']});
-
-  $('#red').colorPicker({group: 1, type: 'red'});
-  $('#red-hex').colorPicker({group: 1, type: 'red', format: 'hex'});
-  $('#green').colorPicker({group: 1, type: 'green'});
-  $('#green-hex').colorPicker({group: 1, type: 'green', format: 'hex'});
-  $('#blue').colorPicker({group: 1, type: 'blue'});
-  $('#blue-hex').colorPicker({group: 1, type: 'blue', format: 'hex'});
-  $('#alpha').colorPicker({group: 1, type: 'alpha'});
-  $('#hue').colorPicker({group: 1, type: 'hue'});
-  $('#saturation').colorPicker({group: 1, type: 'saturation'});
-  $('#value').colorPicker({group: 1, type: 'value'});
-  $('#rgb1, #rgb1-2').colorPicker({group: 1});
-
-  $('#another-rgb').colorPicker({group: 2});
-  $('#another-red').colorPicker({group: 2, type: 'red'});
-  $('#another-blue').colorPicker({group: 2, type: 'blue'});
-  $('#another-green').colorPicker({group: 2, type: 'green'});
+  $('.colors input').colorPicker({group: 1});
+  $('.another-colors input').colorPicker();
 });
 </script>
 <style>
@@ -37,7 +17,7 @@ table {
   border-collapse: collapse;
 }
 
-table.sample {
+table.colors {
   float: left;
 }
 
@@ -55,72 +35,146 @@ footer {
 </style>
 </head>
 <body>
-<table class="sample">
+<table class="colors">
   <tr>
     <th colspan="3">
-      Edittable
-  <tr>
-    <th>Full
-    <td colspan="2"><input type="text" id="rgb1" class="ColorPicker" />
+      Attributes
   <tr>
     <th>Red
-    <td><input type="text" id="red" class="ColorPicker" />
-    <td><input type="text" id="red-hex" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="red"
+      />
+    <td>
+      <input type="text"
+        data-color-type="red"
+        data-color-format="hex"
+      />
   <tr>
     <th>Green
-    <td><input type="text" id="green" class="ColorPicker" />
-    <td><input type="text" id="green-hex" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="green"
+      />
+    <td>
+      <input type="text"
+        data-color-type="green"
+        data-color-format="hex"
+      />
   <tr>
     <th>Blue
-    <td><input type="text" id="blue" class="ColorPicker" />
-    <td><input type="text" id="blue-hex" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="blue"
+      />
+    <td>
+      <input type="text"
+        data-color-type="blue"
+        data-color-format="hex"
+      />
   <tr>
     <th>Alpha
-    <td><input type="text" id="alpha" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="alpha"
+      />
   <tr>
     <th>Hue
-    <td><input type="text" id="hue" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="hue"
+      />
   <tr>
     <th>Saturation
-    <td><input type="text" id="saturation" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="saturation"
+      />
   <tr>
     <th>Value
-    <td><input type="text" id="value" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="value"
+      />
 </table>
-<table class="sample">
+<table class="colors">
   <tr>
-    <th colspan="2">Read Only
+    <th colspan="2">Formatted RGB
   <tr>
-    <th>rgb(rrr, ggg, bbb)
-    <td><input type="text" id="rgb2" class="ColorPicker" />
+    <th>#RRGGBB
+    <td>
+      <input type="text"
+        data-color-type="css"
+        data-color-format="hex"
+      />
   <tr>
     <th>#RGB or #RRGGBB
-    <td><input type="text" id="rgb3" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="css"
+        data-color-format="hex3"
+      />
+  <tr>
+    <th>rgb(rrr, ggg, bbb)
+    <td>
+      <input type="text"
+        data-color-type="css"
+        data-color-format="rgb"
+      />
   <tr>
     <th>Name
-    <td><input type="text" id="rgb4" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="css"
+        data-color-format="name"
+      />
   <tr>
     <th>Name or #XYZ or #RRGGBB
-    <td><input type="text" id="rgb5" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="css"
+        data-color-format="[name, hex3, hex]"
+      />
   <tr>
     <th>Name or rgb()
-    <td><input type="text" id="rgb6" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="css"
+        data-color-format="[name, rgb]"
+      />
 </table>
-<table>
+
+<table class="another-colors">
   <tr>
     <th colspan="2">Another Group
   <tr>
     <th>Full
-    <td colspan="2"><input type="text" id="another-rgb" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="css"
+        data-color-group="2"
+      />
   <tr>
     <th>Red
-    <td><input type="text" id="another-red" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="red"
+        data-color-group="2"
+      />
   <tr>
     <th>Green
-    <td><input type="text" id="another-green" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="green"
+        data-color-group="2"
+      />
   <tr>
     <th>Blue
-    <td><input type="text" id="another-blue" class="ColorPicker" />
+    <td>
+      <input type="text"
+        data-color-type="blue"
+        data-color-group="2"
+      />
 </table>
 
 <footer>
