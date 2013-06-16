@@ -153,6 +153,9 @@ do (jQuery) =>
       return null
 
     # 文字列変換関数
+    toString: ->
+      @hex()
+
     hex: ->
       r = @r.toString(16)
       g = @g.toString(16)
