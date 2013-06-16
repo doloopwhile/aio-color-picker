@@ -3,14 +3,6 @@ do (jQuery) =>
   DataName = 'color'
   $ = jQuery
 
-  in_range = (x, min, max) =>
-    return min if x < min
-    return max if x > max
-    return x
-
-  is_enter_key = (e) =>
-    (e.which? and e.which == 13) or (e.keycode? and e.keycode == 13)
-
   GroupRoots = {}
 
   $.fn.colorPicker  = (options) ->
@@ -61,9 +53,7 @@ do (jQuery) =>
           $(this)
             .data(DataName, initial_color)
 
-            .data 'update_color', (color) =>
-              new_color = color.override($(this).color())
-
+            .data 'update_color', (new_color) =>
               if text_color()? and new_color.equals($(this).color())
                 return
 
@@ -112,17 +102,16 @@ do (jQuery) =>
 
     return this
 
-
   class Color
     constructor: (r=0, g=0, b=0, a=1.0) ->
-      @r = toByteValue(r)
-      @g = toByteValue(g)
-      @b = toByteValue(b)
-      @a = toUnitValue(a)
+      @r = to_byte_value(r)
+      @g = to_byte_value(g)
+      @b = to_byte_value(b)
+      @a = to_unit_value(a)
 
     @fromCSS: (color_string) ->
       color_string = color_string.trim()
-      color_string = Color.simple_colors()[color_string] ? color_string
+      color_string = @simple_colors()[color_string] ? color_string
 
       # array of color definition objects
       color_defs = [
@@ -179,13 +168,15 @@ do (jQuery) =>
 
     name: ->
       hex = @hex()
-      for name, hex_str of Color.simple_colors()
+      for name, hex_str of this.simple_colors()
         if hex_str == hex
           return name
       null
 
     @simple_colors = =>
       SimpleColors
+
+    simple_colors: @simple_colors
 
     # 合成処理関連
     get: (element_name) ->
@@ -201,12 +192,6 @@ do (jQuery) =>
             when 'hue'        then h
             when 'saturation' then s
             when 'value'      then v
-
-    partial: (element_name) ->
-      createPartialColor(element_name, @get(element_name))
-
-    override: (color) ->
-      Object.clone(this)
 
     replace: (element_name, value) ->
       e = element_name.toLowerCase()
@@ -235,40 +220,17 @@ do (jQuery) =>
     equals: (other) ->
       Object.equals(this, other)
 
+  in_range = (x, min, max) =>
+    return min if x < min
+    return max if x > max
+    return x
 
-  class PartialColor
-    constructor: (@element_name, @value) ->
-
-    get: (element_name) ->
-      if @element_name == element_name
-        @value
-      else
-        null
-
-    partial: (element_name) ->
-      if @element_name == element_name
-        Object.clone(this)
-      else
-        createPartialColor(element_name)
-
-    override: (color) ->
-      color.replace(@element_name, @value)
-
-    replace: (element_name, value) ->
-      color = Object.clone(this)
-      if element_name == @element_name
-        color.value = value
-      color
-
-    equals: (other) ->
-      Object.equals(this, other)
-
-  toByteValue = (v) =>
+  to_byte_value = (v) =>
     v = parseInt(v)
     v = 0 if isNaN(v)
     in_range(v, 0, 255)
 
-  toUnitValue = (v) =>
+  to_unit_value = (v) =>
     v = parseFloat(v)
     v = 0 if isNaN(v)
     in_range(v, 0, 1)
@@ -309,17 +271,6 @@ do (jQuery) =>
       when 3 then [p, q, v]
       when 4 then [t, p, v]
       else [v, p, q]
-
-  createPartialColor = (element_name, value) =>
-    element_name = element_name.toLowerCase()
-    switch element_name
-      when 'red', 'green', 'blue'
-        value = toByteValue(value)
-      when 'alpha', 'hue', 'saturation', 'value'
-        value = toUnitValue(value)
-      else
-        return null
-    new PartialColor(element_name, value)
 
   SimpleColors = {
     aliceblue: "#f0f8ff"
