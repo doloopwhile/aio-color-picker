@@ -11,6 +11,8 @@ do (jQuery) =>
   is_enter_key = (e) =>
     (e.which? and e.which == 13) or (e.keycode? and e.keycode == 13)
 
+  GroupRoots = {}
+
   $.fn.colorPicker  = (options) ->
     $elements = this
     options = $.extend({
@@ -18,6 +20,9 @@ do (jQuery) =>
     }, options)
 
     type = options.type
+
+    initial_color = new Color
+
     switch type
       when 'css', 'red', 'green', 'blue', 'alpha', 'hue', 'saturation', 'value'
         options = $.extend({
@@ -54,7 +59,7 @@ do (jQuery) =>
                 $(this).val(color.get(type))
 
           $(this)
-            .data(DataName, new Color)
+            .data(DataName, initial_color)
 
             .data 'update_color', (color) =>
               new_color = color.override($(this).color())
@@ -76,6 +81,24 @@ do (jQuery) =>
 
               $(this).data('update_color')(new_color)
 
+    if not options.group?
+      return
+
+    root = GroupRoots[options.group]
+    if not root?
+      root =
+        _color: initial_color
+        update_color: (new_color) ->
+          if new_color.equals(@_color)
+            return
+          @_color = new_color
+          $(this).trigger(EventName, new_color)
+      GroupRoots[options.group] = root
+
+    $(root).on EventName, (event, color) =>
+      $elements.color(color)
+    $elements.on EventName, (event, color) =>
+      root.update_color(color)
 
   $.fn.color = (color) ->
     unless color?

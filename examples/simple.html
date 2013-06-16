@@ -7,31 +7,28 @@
 <title>aio-color-picker/Simple Example</title>
 <script type="text/javascript">
 $(function() {
-  $('#rgb2').colorPicker({format: 'rgb'});
-  $('#rgb3').colorPicker({format: 'hex3'});
-  $('#rgb4').colorPicker({format: 'name'});
-  $('#rgb5').colorPicker({format: ['name', 'hex3']});
-  $('#rgb6').colorPicker({format: ['name', 'rgb']});
+  $('#rgb2').colorPicker({group: 1, format: 'rgb'});
+  $('#rgb3').colorPicker({group: 1, format: 'hex3'});
+  $('#rgb4').colorPicker({group: 1, format: 'name'});
+  $('#rgb5').colorPicker({group: 1, format: ['name', 'hex3']});
+  $('#rgb6').colorPicker({group: 1, format: ['name', 'rgb']});
 
-  $('#red').colorPicker({type: 'red'});
-  $('#red-hex').colorPicker({type: 'red', format: 'hex'});
-  $('#green').colorPicker({type: 'green'});
-  $('#green-hex').colorPicker({type: 'green', format: 'hex'});
-  $('#blue').colorPicker({type: 'blue'});
-  $('#blue-hex').colorPicker({type: 'blue', format: 'hex'});
-  $('#alpha').colorPicker({type: 'alpha'});
-  $('#hue').colorPicker({type: 'hue'});
-  $('#saturation').colorPicker({type: 'saturation'});
-  $('#value').colorPicker({type: 'value'});
+  $('#red').colorPicker({group: 1, type: 'red'});
+  $('#red-hex').colorPicker({group: 1, type: 'red', format: 'hex'});
+  $('#green').colorPicker({group: 1, type: 'green'});
+  $('#green-hex').colorPicker({group: 1, type: 'green', format: 'hex'});
+  $('#blue').colorPicker({group: 1, type: 'blue'});
+  $('#blue-hex').colorPicker({group: 1, type: 'blue', format: 'hex'});
+  $('#alpha').colorPicker({group: 1, type: 'alpha'});
+  $('#hue').colorPicker({group: 1, type: 'hue'});
+  $('#saturation').colorPicker({group: 1, type: 'saturation'});
+  $('#value').colorPicker({group: 1, type: 'value'});
+  $('#rgb1, #rgb1-2').colorPicker({group: 1});
 
-  $('#rgb1, #rgb1-2').colorPicker();
-
-  $('#rgb1').on('ColorChange', function(event, color) {
-     $('.ColorPicker').not('#rgb1').color(color);
-  });
-  $('.ColorPicker').not('#rgb1').on('ColorChange', function(event, color) {
-     $('#rgb1').color(color);
-  });
+  $('#another-rgb').colorPicker({group: 2});
+  $('#another-red').colorPicker({group: 2, type: 'red'});
+  $('#another-blue').colorPicker({group: 2, type: 'blue'});
+  $('#another-green').colorPicker({group: 2, type: 'green'});
 });
 </script>
 <style>
@@ -108,6 +105,22 @@ footer {
   <tr>
     <th>Name or rgb()
     <td><input type="text" id="rgb6" class="ColorPicker" />
+</table>
+<table>
+  <tr>
+    <th colspan="2">Another Group
+  <tr>
+    <th>Full
+    <td colspan="2"><input type="text" id="another-rgb" class="ColorPicker" />
+  <tr>
+    <th>Red
+    <td><input type="text" id="another-red" class="ColorPicker" />
+  <tr>
+    <th>Green
+    <td><input type="text" id="another-green" class="ColorPicker" />
+  <tr>
+    <th>Blue
+    <td><input type="text" id="another-blue" class="ColorPicker" />
 </table>
 
 <footer>
