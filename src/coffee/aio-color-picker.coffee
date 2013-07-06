@@ -329,41 +329,21 @@ do ($) =>
     yellowgreen: "#9acd32"
   }
 
-  $.widget 'ui.colorpicker',
+  $.widget 'ui.colorwidget',
     _create: ->
-      if not @element.is('input[type=text]')
-        return
-
       @options = $.extend({
         color: @element.data('colorpicker-color') ? new Color
-        type: @element.data('colorpicker-type') ? 'css'
-        format: @element.data('colorpicker-format')
         group: @element.data('colorpicker-group')
       }, @options)
 
-      if $.type(@options.format) != 'array'
-        @options.format = [@options.format]
+      @_trigger 'updateelement', null, @option('color')
 
-      @_updateDom(@options.color)
-      @element.on 'change', =>
-        new_color = @_colorFromDom()
-        if not new_color?
-          return
-        color = @option 'color'
-        if new_color.equals color
-          return
-        @_setOption 'color', new_color
-
-      if not @options.group?
-        return
-
-      root = GroupRoots[@options.group] ?= new ColorHolder(@options.color)
-
-      $(root).on 'change', (event, color) =>
+      $(@_getRoot()).on 'change', (event, color) =>
         @option 'color', color
 
-      @element.bind 'colorpickerchange', (event, color) =>
-        root.updateColor(color)
+    _getRoot: () ->
+      root = GroupRoots[@options.group] ?= new ColorHolder(@options.color)
+      return root
 
     _setOption: (key, value) ->
       if key != 'color'
@@ -375,16 +355,44 @@ do ($) =>
         new_color = value
 
       old_color = @option('color')
-      if @_colorFromDom()? and new_color.equals(old_color)
+      if new_color.equals(old_color)
         return
 
       @options.color = new_color
-      @_updateDom(new_color)
+      @_trigger 'updateelement', null, new_color
+      @_getRoot().updateColor(new_color)
+      @_trigger 'colorwidgetchange', null, new_color
 
-      @_trigger 'change', null, new_color
+  $.widget 'ui.colorinput', $.ui.colorwidget,
+    _base: $.ui.colorwidget.prototype
+    _create: ->
+      if not @element.is('input[type=text]')
+        return
 
-    _updateDom: (color) ->
-      if @_colorFromDom()?.equals(color)
+      @options = $.extend({
+        type: @element.data('colorpicker-type') ? 'css'
+        format: @element.data('colorpicker-format')
+      }, @options)
+
+      if $.type(@options.format) != 'array'
+        @options.format = [@options.format]
+
+      @options.updateelement = (event, color) =>
+        @_updateElement(color)
+
+      @_super()
+
+      @element.on 'change', =>
+        new_color = @_colorFromElement()
+        if not new_color?
+          return
+        color = @option 'color'
+        if new_color.equals color
+          return
+        @_setOption 'color', new_color
+
+    _updateElement: (color) ->
+      if @_colorFromElement()?.equals(color)
         return
 
       type = @option 'type'
@@ -405,7 +413,7 @@ do ($) =>
         else
           @element.val(color.get(type))
 
-    _colorFromDom: ->
+    _colorFromElement: ->
       type = @options.type
       color = @options.color
       val = @element.val()
