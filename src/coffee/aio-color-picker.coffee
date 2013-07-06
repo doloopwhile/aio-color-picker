@@ -1,50 +1,5 @@
-do (jQuery) =>
-  EventName = 'ColorChange'
-  DataName = 'Color'
-  $ = jQuery
-
+do ($) =>
   GroupRoots = {}
-
-  $.fn.colorPicker  = (options) ->
-    $elements = []
-
-    initial_color = new Color
-    this.each ->
-      if not $(this).is('input[type=text]')
-        return
-
-      dom_options = $.extend({
-        type: $(this).data('color-type') ? 'css',
-        group: $(this).data('color-group'),
-        format: $(this).data('color-format')
-      }, options)
-
-      if $.type(dom_options.format) != 'array'
-        dom_options.format = [dom_options.format]
-
-      # 設定情報の構築
-      $(this)
-        .data(DataName, new ColorDomImpl(this, initial_color, dom_options))
-        .on 'change', ->
-          $(this).data(DataName).onChange()
-
-      if not dom_options.group?
-        return
-
-      root = GroupRoots[dom_options.group] ?= new ColorHolder(initial_color)
-
-      $(root).on EventName, (event, color) => $(this).color(color)
-      $(this).on EventName, (event, color) => root.updateColor(color)
-
-  $.fn.color = (color) ->
-    unless color?
-      return this.data(DataName).color()
-
-    this.each ->
-      $(this).data(DataName).updateColor(color)
-
-    return this
-
 
   class ColorHolder
     constructor: (@_color) ->
@@ -53,61 +8,7 @@ do (jQuery) =>
       if new_color.equals(@_color)
         return
       @_color = new_color
-      $(this).trigger(EventName, new_color)
-
-
-  class ColorDomImpl
-    constructor: (@_dom, @_color, @_options)->
-
-    color: -> @_color
-
-    updateColor: (new_color) ->
-      if jQuery.type(new_color) == "string"
-        new_color = Color.fromCSS(new_color)
-
-      if @_colorFromDom()? and new_color.equals(@_color)
-        return
-
-      @_color = new_color
-      @_updateDom(new_color)
-      $(@_dom).trigger(EventName, new_color)
-
-    onChange: ->
-      new_color = @_colorFromDom()
-      if not @_colorFromDom()?
-        return
-      if new_color.equals(@_color)
-        return
-      @updateColor(new_color)
-
-    _colorFromDom: ->
-      switch @_options.type
-        when 'css'
-          Color.fromCSS($(@_dom).val())
-        when 'red', 'green', 'blue'
-          v = parseInt($(@_dom).val())
-          @_color.replace(@_options.type, v)
-        when 'alpha', 'hue', 'saturation', 'value'
-          v = parseFloat($(@_dom).val())
-          @_color.replace(@_options.type, v)
-
-    _updateDom: (color) =>
-      if @_colorFromDom()?.equals(color)
-        return
-      switch @_options.type
-        when 'css'
-          name = (color.name() if 'name' in @_options.format)
-          hex3 = (color.hex3() if 'hex3' in @_options.format)
-          rgb  = (color.rgb() if 'rgb' in @_options.format)
-          $(@_dom).val(name ? hex3 ? rgb ? color.hex())
-        when 'red', 'green', 'blue'
-          v = color.get(@_options.type)
-          if 'hex' in  @_options.format
-            v = ('00' + v.toString(16)).slice(-2)
-          $(@_dom).val(v)
-        else
-          $(@_dom).val(color.get(@_options.type))
-
+      $(this).trigger('change', new_color)
 
   class Color
     constructor: (r=0, g=0, b=0, a=1.0) ->
@@ -427,3 +328,100 @@ do (jQuery) =>
     yellow: "#ffff00"
     yellowgreen: "#9acd32"
   }
+
+  $.widget 'ui.colorpicker',
+    _create: ->
+      if not @element.is('input[type=text]')
+        return
+
+      @options = $.extend({
+        color: @element.data('colorpicker-color') ? new Color
+        type: @element.data('colorpicker-type') ? 'css'
+        format: @element.data('colorpicker-format')
+        group: @element.data('colorpicker-group')
+      }, @options)
+
+      if $.type(@options.format) != 'array'
+        @options.format = [@options.format]
+
+      @_updateDom(@options.color)
+      @element.on 'change', =>
+        new_color = @_colorFromDom()
+        if not new_color?
+          return
+        color = @option 'color'
+        if new_color.equals color
+          return
+        @_setOption 'color', new_color
+
+      if not @options.group?
+        return
+
+      root = GroupRoots[@options.group] ?= new ColorHolder(@options.color)
+
+      $(root).on 'change', (event, color) =>
+        @option 'color', color
+
+      @element.bind 'colorpickerchange', (event, color) =>
+        root.updateColor(color)
+
+    _setOption: (key, value) ->
+      if key != 'color'
+        return @_super 'option', key, value
+
+      if $.type(value) == 'string'
+        new_color = Color.fromCSS(value)
+      else
+        new_color = value
+
+      old_color = @option('color')
+      if @_colorFromDom()? and new_color.equals(old_color)
+        return
+
+      @options.color = new_color
+      @_updateDom(new_color)
+
+      @_trigger 'change', null, new_color
+
+    _updateDom: (color) ->
+      if @_colorFromDom()?.equals(color)
+        return
+
+      type = @option 'type'
+      format = @option 'format'
+      switch type
+        when 'css'
+          name = (color.name() if 'name' in format)
+          hex3 = (color.hex3() if 'hex3' in format)
+          rgb  = (color.rgb() if 'rgb' in format)
+          @element.val(name ? hex3 ? rgb ? color.hex())
+        when 'red', 'green', 'blue'
+          v = color.get type
+          if 'hex' in  format
+            v = ('00' + v.toString(16)).slice(-2)
+          else
+            v = v.toString()
+          @element.val(v)
+        else
+          @element.val(color.get(type))
+
+    _colorFromDom: ->
+      type = @options.type
+      color = @options.color
+      val = @element.val()
+
+      if type == 'css'
+        Color.fromCSS val
+      else
+        v = switch type
+          when 'red', 'green', 'blue'
+            if 'hex' in @options.format
+              parseInt(val, 16)
+            else
+              parseInt val
+          else
+            parseFloat val
+        if isNaN(v)
+          return null
+        color.replace type, v
+

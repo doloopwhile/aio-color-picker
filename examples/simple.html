@@ -2,17 +2,22 @@
 <html>
 <head>
 <script src='../js-object-clone/object-clone.js'></script>
-<script src='../jquery-2.0.0.js'></script>
+<script src='http://code.jquery.com/jquery-2.0.2.js'></script>
+<script src='http://code.jquery.com/ui/1.10.3/jquery-ui.js'></script>
+<link rel="stylesheet" type="text/css"
+  href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
+/>
+
 <script src='../js/aio-color-picker.js'></script>
 <title>aio-color-picker/Simple Example</title>
 <script type="text/javascript">
 $(function() {
   $('.colors input')
-    .colorPicker({group: 1})
-    .on("ColorChange", function(event, color) {
+    .colorpicker({group: 1})
+    .on("colorpickerchange", function(event, color) {
       $("#ColorPreview").css("background-color", color.toString());
     });
-  $('.another-colors input').colorPicker();
+  $('.another-colors input').colorpicker();
 });
 </script>
 <style>
@@ -72,58 +77,58 @@ footer {
     <th>Red
     <td>
       <input type="text"
-        data-color-type="red"
+        data-colorpicker-type="red"
       />
     <td>
       <input type="text"
-        data-color-type="red"
-        data-color-format="hex"
+        data-colorpicker-type="red"
+        data-colorpicker-format="hex"
       />
   <tr>
     <th>Green
     <td>
       <input type="text"
-        data-color-type="green"
+        data-colorpicker-type="green"
       />
     <td>
       <input type="text"
-        data-color-type="green"
-        data-color-format="hex"
+        data-colorpicker-type="green"
+        data-colorpicker-format="hex"
       />
   <tr>
     <th>Blue
     <td>
       <input type="text"
-        data-color-type="blue"
+        data-colorpicker-type="blue"
       />
     <td>
       <input type="text"
-        data-color-type="blue"
-        data-color-format="hex"
+        data-colorpicker-type="blue"
+        data-colorpicker-format="hex"
       />
   <tr>
     <th>Alpha
     <td>
       <input type="text"
-        data-color-type="alpha"
+        data-colorpicker-type="alpha"
       />
   <tr>
     <th>Hue
     <td>
       <input type="text"
-        data-color-type="hue"
+        data-colorpicker-type="hue"
       />
   <tr>
     <th>Saturation
     <td>
       <input type="text"
-        data-color-type="saturation"
+        data-colorpicker-type="saturation"
       />
   <tr>
     <th>Value
     <td>
       <input type="text"
-        data-color-type="value"
+        data-colorpicker-type="value"
       />
 </table>
 <table class="colors">
@@ -132,44 +137,44 @@ footer {
   <tr>
     <th>#RRGGBB
     <td>
-      <input type="text"
-        data-color-type="css"
-        data-color-format="hex"
+      <input type="text" id="css-hex"
+        data-colorpicker-type="css"
+        data-colorpicker-format="hex"
       />
   <tr>
     <th>#RGB or #RRGGBB
     <td>
       <input type="text"
-        data-color-type="css"
-        data-color-format="hex3"
+        data-colorpicker-type="css"
+        data-colorpicker-format="hex3"
       />
   <tr>
     <th>rgb(rrr, ggg, bbb)
     <td>
       <input type="text"
-        data-color-type="css"
-        data-color-format="rgb"
+        data-colorpicker-type="css"
+        data-colorpicker-format="rgb"
       />
   <tr>
     <th>Name
     <td>
       <input type="text"
-        data-color-type="css"
-        data-color-format="name"
+        data-colorpicker-type="css"
+        data-colorpicker-format="name"
       />
   <tr>
     <th>Name or #XYZ or #RRGGBB
     <td>
       <input type="text"
-        data-color-type="css"
-        data-color-format="[name, hex3, hex]"
+        data-colorpicker-type="css"
+        data-colorpicker-format="[name, hex3, hex]"
       />
   <tr>
     <th>Name or rgb()
     <td>
       <input type="text"
-        data-color-type="css"
-        data-color-format="[name, rgb]"
+        data-colorpicker-type="css"
+        data-colorpicker-format="[name, rgb]"
       />
 </table>
 </div>
@@ -181,29 +186,29 @@ footer {
     <th>Full
     <td>
       <input type="text"
-        data-color-type="css"
-        data-color-group="2"
+        data-colorpicker-type="css"
+        data-colorpicker-group="2"
       />
   <tr>
     <th>Red
     <td>
       <input type="text"
-        data-color-type="red"
-        data-color-group="2"
+        data-colorpicker-type="red"
+        data-colorpicker-group="2"
       />
   <tr>
     <th>Green
     <td>
       <input type="text"
-        data-color-type="green"
-        data-color-group="2"
+        data-colorpicker-type="green"
+        data-colorpicker-group="2"
       />
   <tr>
     <th>Blue
     <td>
       <input type="text"
-        data-color-type="blue"
-        data-color-group="2"
+        data-colorpicker-type="blue"
+        data-colorpicker-group="2"
       />
 </table>
 
