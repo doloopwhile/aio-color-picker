@@ -360,9 +360,9 @@ do ($) =>
 
       @options.color = new_color
       @_trigger 'updateelement', null, new_color
-      @_getRoot().updateColor(new_color) 
+      @_getRoot().updateColor(new_color)
       @_trigger 'colorwidgetchange', null, new_color
-      
+
   $.widget 'ui.colorinput', $.ui.colorwidget,
     _base: $.ui.colorwidget.prototype
     _create: ->
@@ -432,4 +432,4 @@ do ($) =>
         if isNaN(v)
           return null
         color.replace type, v
-  
+
