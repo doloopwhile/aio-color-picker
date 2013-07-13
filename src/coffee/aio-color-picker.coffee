@@ -364,7 +364,6 @@ do ($) =>
       @_trigger 'colorwidgetchange', null, new_color
 
   $.widget 'ui.colorinput', $.ui.colorwidget,
-    _base: $.ui.colorwidget.prototype
     _create: ->
       if not @element.is('input[type=text]')
         return
@@ -374,8 +373,10 @@ do ($) =>
         format: @element.data('colorpicker-format')
       }, @options)
 
-      if $.type(@options.format) != 'array'
-        @options.format = [@options.format]
+      if @options.format == undefined
+        @options.format = []
+      else if $.type(@options.format) == 'string'
+        @options.format = @options.format.split(':')
 
       @options.updateelement = (event, color) =>
         @_updateElement(color)
@@ -392,7 +393,8 @@ do ($) =>
         @_setOption 'color', new_color
 
     _updateElement: (color) ->
-      if @_colorFromElement()?.equals(color)
+      c = @_colorFromElement()
+      if c? and c.equals(color)
         return
 
       type = @option 'type'
@@ -416,10 +418,13 @@ do ($) =>
     _colorFromElement: ->
       type = @options.type
       color = @options.color
-      val = @element.val()
+      val = $.trim(@element.val())
 
       if type == 'css'
-        Color.fromCSS val
+        if val != ''
+          Color.fromCSS(val)
+        else
+          null
       else
         v = switch type
           when 'red', 'green', 'blue'

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src='../js-object-clone/object-clone.js'></script>
+<script src='http://code.jquery.com/jquery-2.0.2.js'></script>
+<script src='http://code.jquery.com/ui/1.10.3/jquery-ui.js'></script>
+<link rel="stylesheet" type="text/css"
+  href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
+/>
+
+<script src='../js/aio-color-picker.js'></script>
+<title>aio-color-picker/Simple Example</title>
+<script type="text/javascript">
+$(function() {
+  $('.colors input')
+    .colorinput({group: 1});
+
+  $('#ColorPreview').colorwidget({group: 1,
+    'updateelement': function(event, color) {
+      $(this).css("background-color", color.toString());
+    }
+  });
+
+  $('.another-colors input').colorinput();
+});
+</script>
+<style>
+table {
+  border: solid gray 1px;
+  border-collapse: collapse;
+}
+
+table.colors {
+  float: left;
+}
+
+div#ColorInputs:after {
+  clear: both;
+}
+
+div#ColorInputs {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+#ColorPreview {
+  width: 200px;
+  height: 200px;
+  border: 1px black dotted;
+}
+
+div.separator {
+  clear: both;
+}
+
+table.another-colors {
+  margin-top: 10px;
+}
+
+th {
+  text-align: left;
+}
+
+td, th {
+  border: solid gray 1px;
+}
+
+footer {
+  clear: both;
+}
+</style>
+</head>
+<body>
+<div id="ColorPreview"></div>
+<div id="ColorInputs">
+<table class="colors">
+  <tr>
+    <th colspan="3">
+      Attributes
+  <tr>
+    <th>Red
+    <td>
+      <input type="text"
+        data-colorpicker-type="red"
+      />
+    <td>
+      <input type="text"
+        data-colorpicker-type="red"
+        data-colorpicker-format="hex"
+      />
+  <tr>
+    <th>Green
+    <td>
+      <input type="text"
+        data-colorpicker-type="green"
+      />
+    <td>
+      <input type="text"
+        data-colorpicker-type="green"
+        data-colorpicker-format="hex"
+      />
+  <tr>
+    <th>Blue
+    <td>
+      <input type="text"
+        data-colorpicker-type="blue"
+      />
+    <td>
+      <input type="text"
+        data-colorpicker-type="blue"
+        data-colorpicker-format="hex"
+      />
+  <tr>
+    <th>Alpha
+    <td>
+      <input type="text"
+        data-colorpicker-type="alpha"
+      />
+  <tr>
+    <th>Hue
+    <td>
+      <input type="text"
+        data-colorpicker-type="hue"
+      />
+  <tr>
+    <th>Saturation
+    <td>
+      <input type="text"
+        data-colorpicker-type="saturation"
+      />
+  <tr>
+    <th>Value
+    <td>
+      <input type="text"
+        data-colorpicker-type="value"
+      />
+</table>
+<table class="colors">
+  <tr>
+    <th colspan="2">Formatted RGB
+  <tr>
+    <th>#RRGGBB
+    <td>
+      <input type="text" id="css-hex"
+        data-colorpicker-type="css"
+        data-colorpicker-format="hex"
+      />
+  <tr>
+    <th>#RGB or #RRGGBB
+    <td>
+      <input type="text"
+        data-colorpicker-type="css"
+        data-colorpicker-format="hex3"
+      />
+  <tr>
+    <th>rgb(rrr, ggg, bbb)
+    <td>
+      <input type="text"
+        data-colorpicker-type="css"
+        data-colorpicker-format="rgb"
+      />
+  <tr>
+    <th>Name
+    <td>
+      <input type="text"
+        data-colorpicker-type="css"
+        data-colorpicker-format="name"
+      />
+  <tr>
+    <th>Name or #XYZ or #RRGGBB
+    <td>
+      <input type="text"
+        data-colorpicker-type="css"
+        data-colorpicker-format="[name, hex3, hex]"
+      />
+  <tr>
+    <th>Name or rgb()
+    <td>
+      <input type="text"
+        data-colorpicker-type="css"
+        data-colorpicker-format="[name, rgb]"
+      />
+</table>
+</div>
+<div class="separator"></div>
+<table class="another-colors">
+  <tr>
+    <th colspan="2">Another Group
+  <tr>
+    <th>Full
+    <td>
+      <input type="text"
+        data-colorpicker-type="css"
+        data-colorpicker-group="2"
+      />
+  <tr>
+    <th>Red
+    <td>
+      <input type="text"
+        data-colorpicker-type="red"
+        data-colorpicker-group="2"
+      />
+  <tr>
+    <th>Green
+    <td>
+      <input type="text"
+        data-colorpicker-type="green"
+        data-colorpicker-group="2"
+      />
+  <tr>
+    <th>Blue
+    <td>
+      <input type="text"
+        data-colorpicker-type="blue"
+        data-colorpicker-group="2"
+      />
+</table>
+
+<footer>
+<a href="https://github.com/doloopwhile/aio-color-picker">
+https://github.com/doloopwhile/aio-color-picker
+</a>
+</footer>
+</body>
+</html>
