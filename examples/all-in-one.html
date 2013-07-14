@@ -69,11 +69,22 @@ footer {
   clear: both;
 }
 
+#ColorSquares:after {
+  clear: both;
+  content: '.';
+  visibility: hidden;
+}
+
+#ColorSquares {
+  height: 100px;
+}
+
 #ColorSquares div {
   width:  100px;
   height: 100px;
   float: left;
 }
+
 #ColorSquares div canvas {
   border: solid 1px black;
 }

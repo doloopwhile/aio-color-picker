@@ -489,13 +489,42 @@ do ($) =>
     constructor: (@_this) ->
 
     init: ->
+      @_this.options.updateelement = (event, color) =>
+        c = @colorFromElement()
+        if c? and c.equals(color)
+          return
+        @updateElement(color)
+
       @canvas = $('<canvas></canvas>')
       @canvas.get(0).width  = @_this.element.width()
       @canvas.get(0).height = @_this.element.height()
       @_this.element.append(@canvas)
 
-    updateElement: (color) ->
-      colors = switch @_this.options.type
+      @_this._super()
+
+      on_press_or_move = (event) =>
+        if 1 & event.buttons == 0
+          return
+
+        attrs = @attrs()
+
+        x = event.clientX - @canvas.offset().left
+        y = event.clientY - @canvas.offset().top
+
+        color = @_this.option('color')
+        new_color = color \
+          .replace(attrs[0], x / @canvas.width()) \
+          .replace(attrs[1], (1 - y / @canvas.height()))
+
+        if new_color.equals color
+          return
+        @_this._setOption 'color', new_color
+
+      @canvas.on 'mousedown', on_press_or_move
+      @canvas.on 'mousemove', on_press_or_move
+
+    attrs: ->
+      switch @_this.options.type
         when 'red-green-square'
           ['red', 'green', 'blue']
         when 'green-blue-square'
@@ -503,13 +532,13 @@ do ($) =>
         when 'blue-red-square'
           ['blue', 'red', 'green']
 
-      image1 = new Image
-      image2 = new Image
-      image1.src = GradImageSrc[colors[0]]
-      image2.src = GradImageSrc[colors[1]]
-
+    updateElement: (color) ->
+      attrs = @attrs()
       width  = @_this.element.width()
       height = @_this.element.height()
+
+      image1 = new Image
+      image2 = new Image
 
       onload = [false, false]
       image1.onload = =>
@@ -523,6 +552,7 @@ do ($) =>
         ctx = @canvas.get(0).getContext('2d')
         ctx.save()
         ctx.scale width / 256, height / 256
+
         ctx.drawImage image1, 0, 0, 255, 255
 
         ctx.globalCompositeOperation = 'lighter'
@@ -532,17 +562,18 @@ do ($) =>
         ctx.drawImage image2, 0, 0, 255, 255
         ctx.restore()
 
+        ctx.globalCompositeOperation = 'lighter'
         ctx.fillStyle = {
           'red':   '#F00',
           'green': '#0F0',
           'blue':  '#00F',
-        }[colors[2]];
-        ctx.globalAlpha = color.get(colors[2])
+        }[attrs[2]];
+        ctx.globalAlpha = color.get(attrs[2])
         ctx.fillRect 0, 0, 255, 255
         ctx.restore()
 
-        x = color.get(colors[0]) / 255 * width
-        y = (255 - color.get(colors[1])) / 255 * height
+        x = color.get(attrs[0]) * width
+        y = (1 - color.get(attrs[1])) * height
 
         ctx.save()
         ctx.globalAlpha = 1
@@ -558,7 +589,8 @@ do ($) =>
         ctx.arc(x, y, 8, 0, 2 * Math.PI)
         ctx.stroke()
 
-        ctx.stroke()
+      image1.src = GradImageSrc[attrs[0]]
+      image2.src = GradImageSrc[attrs[1]]
 
     colorFromElement: ->
       null
