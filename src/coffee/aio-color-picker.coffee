@@ -365,32 +365,12 @@ do ($) =>
 
   $.widget 'ui._abstractcolorinput', $.ui.colorwidget,
     _create: ->
-      if not @element.is('input[type=text]')
-        return
-
       @options = $.extend({
         type: @element.data('colorinput-type') ? 'css'
       }, @options)
 
       @_impl = @_getColorInputImpl(@options.type)
       @_impl.init()
-
-      @options.updateelement = (event, color) =>
-        c = @_impl.colorFromElement()
-        if c? and c.equals(color)
-          return
-        @_impl.updateElement(color)
-
-      @_super()
-
-      @element.on 'change', =>
-        new_color = @_impl.colorFromElement()
-        if not new_color?
-          return
-        color = @option 'color'
-        if new_color.equals color
-          return
-        @_setOption 'color', new_color
 
   $.widget 'ui.colorinput', $.ui._abstractcolorinput,
     _getColorInputImpl: (type) ->
@@ -422,29 +402,44 @@ do ($) =>
   class AbstractColorInputImpl
     constructor: (@_this) ->
     init: ->
-    type: -> @_this.option('type')
-    element: -> @_this.element
-    color: -> @_this.option('color')
+      @_this.options.updateelement = (event, color) =>
+        c = @colorFromElement()
+        if c? and c.equals(color)
+          return
+        @updateElement(color)
+
+      @_this._super()
+
+      @_this.element.on 'change', =>
+        new_color = @colorFromElement()
+        if not new_color?
+          return
+        color = @_this.option 'color'
+        if new_color.equals color
+          return
+        @_this._setOption 'color', new_color
+
     updateElement: (color) -> abstract
     colorFromElement: -> abstract
 
 
   class CssColorInputImpl extends AbstractColorInputImpl
     init: ->
-      @_this.options.css_format ?= @element().data('colorinput-css-format')
+      @_this.options.css_format ?= @_this.element.data('colorinput-css-format')
       if @_this.options.css_format == undefined
         @_this.options.css_format = []
       else if $.type(@_this.options.css_format) == 'string'
         @_this.options.css_format = @_this.options.css_format.split(/\s+/)
+      super()
 
     updateElement: (color) ->
       name = (color.name() if 'name' in @css_format())
       hex3 = (color.hex3() if 'hex3' in @css_format())
       rgb  = (color.rgb() if 'rgb' in @css_format())
-      @element().val(name ? hex3 ? rgb ? color.hex())
+      @_this.element.val(name ? hex3 ? rgb ? color.hex())
 
     colorFromElement: ->
-      Color.fromCSS(@element().val())
+      Color.fromCSS(@_this.element.val())
 
     css_format: ->
       @_this.option('css_format')
@@ -456,22 +451,22 @@ do ($) =>
         redhex: 'red',
         greenhex: 'green',
         bluehex: 'blue',
-      }[@type()] or @type()
+      }[@_this.options.type] or @_this.options.type
       v = color.get t
 
-      text = switch @type()
+      text = switch @_this.options.type
         when 'red', 'green', 'blue'
           v.toString()
         when 'redhex', 'greenhex', 'bluehex'
           ('00' + v.toString(16)).slice(-2)
         else
           v.toString()
-      @element().val(text)
+      @_this.element.val(text)
 
     colorFromElement: ->
-      val = $.trim(@element().val())
+      val = $.trim(@_this.element.val())
 
-      v = switch @type()
+      v = switch @_this.options.type
         when 'red', 'green', 'blue'
           parseInt val
         when 'redhex', 'greenhex', 'bluehex'
@@ -485,6 +480,135 @@ do ($) =>
         redhex: 'red',
         greenhex: 'green',
         bluehex: 'blue',
-      }[@type()] or @type()
+      }[@_this.options.type] or @_this.options.type
 
-      @color().replace(t, v)
+      @_this.options.color.replace(t, v)
+
+
+  class ColorSquareImpl
+    constructor: (@_this) ->
+
+    init: ->
+      @canvas = $('<canvas></canvas>')
+      @canvas.get(0).width  = @_this.element.width()
+      @canvas.get(0).height = @_this.element.height()
+      @_this.element.append(@canvas)
+
+    updateElement: (color) ->
+      colors = switch @_this.options.type
+        when 'red-green-square'
+          ['red', 'green', 'blue']
+        when 'green-blue-square'
+          ['green', 'blue', 'red']
+        when 'blue-red-square'
+          ['blue', 'red', 'green']
+
+      image1 = new Image
+      image2 = new Image
+      image1.src = GradImageSrc[colors[0]]
+      image2.src = GradImageSrc[colors[1]]
+
+      width  = @_this.element.width()
+      height = @_this.element.height()
+
+      onload = [false, false]
+      image1.onload = =>
+        onload[0] = true
+        draw() if onload[0] and onload[1]
+      image2.onload = =>
+        onload[1] = true
+        draw() if onload[0] and onload[1]
+
+      draw = =>
+        ctx = @canvas.get(0).getContext('2d')
+        ctx.save()
+        ctx.scale width / 256, height / 256
+        ctx.drawImage image1, 0, 0, 255, 255
+
+        ctx.globalCompositeOperation = 'lighter'
+        ctx.save()
+        ctx.rotate -Math.PI / 2
+        ctx.translate -255, 0
+        ctx.drawImage image2, 0, 0, 255, 255
+        ctx.restore()
+
+        ctx.fillStyle = {
+          'red':   '#F00',
+          'green': '#0F0',
+          'blue':  '#00F',
+        }[colors[2]];
+        ctx.globalAlpha = color.get(colors[2])
+        ctx.fillRect 0, 0, 255, 255
+        ctx.restore()
+
+        x = color.get(colors[0]) / 255 * width
+        y = (255 - color.get(colors[1])) / 255 * height
+
+        ctx.save()
+        ctx.globalAlpha = 1
+        ctx.strokeStyle = 'white'
+        ctx.beginPath()
+        ctx.lineWidth = 2
+        ctx.arc(x, y, 7, 0, 2 * Math.PI)
+        ctx.stroke()
+
+        ctx.lineWidth = 1
+        ctx.strokeStyle = 'black'
+        ctx.beginPath()
+        ctx.arc(x, y, 8, 0, 2 * Math.PI)
+        ctx.stroke()
+
+        ctx.stroke()
+
+    colorFromElement: ->
+      null
+
+  GradImageSrc = {
+    red: ('data:image/png;base64,'+
+      'iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAACuUlEQVR4nO3TAREAMBCDsP78i54Q'+
+      'ksMCt+2kam8QZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECa'+
+      'AUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQ'+
+      'ZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0A'+
+      'pBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgz'+
+      'AGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDS'+
+      'DECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmA'+
+      'NAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkG'+
+      'IM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECa'+
+      'AUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQ'+
+      'ZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0A'+
+      'pBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgz'+
+      'AGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApH3agQL/FDYS'+
+      'IQAAAABJRU5ErkJggg=='),
+
+    green: ('data:image/png;base64,' +
+      'iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAACuklEQVR4nO3TAREAMBCDsP78i54Q' +
+      'ksMCt20nRXuDMAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDS' +
+      'DECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmA' +
+      'NAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkG' +
+      'IM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECa' +
+      'AUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQ' +
+      'ZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0A' +
+      'pBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgz' +
+      'AGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDS' +
+      'DECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmA' +
+      'NAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkG' +
+      'IM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECa' +
+      'AUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIO0D2YIC/6nx' +
+      'EXQAAAAASUVORK5CYII='),
+
+    blue: ('data:image/png;base64,' +
+      'iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAACuklEQVR4nO3TAREAMBCDsP78i54Q' +
+      'ksMCt207qdkbhBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQ' +
+      'ZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0A' +
+      'pBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgz' +
+      'AGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDS' +
+      'DECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmA' +
+      'NAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkG' +
+      'IM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECa' +
+      'AUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQ' +
+      'ZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0A' +
+      'pBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgz' +
+      'AGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDS' +
+      'DECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkGIM0ApBmANAOQZgDSDECaAUgzAGkf2IMC/2NN' +
+      '6/kAAAAASUVORK5CYII=')
+  }

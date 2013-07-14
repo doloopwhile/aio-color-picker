@@ -12,8 +12,8 @@
 <title>aio-color-picker/Simple Example</title>
 <script type="text/javascript">
 $(function() {
-  $('.colors input')
-    .colorinput({group: 1});
+  $('.colors input').colorinput({group: 1});
+  $('#ColorSquares div').colorinput({group: 1});
 
   $('#ColorPreview').colorwidget({group: 1,
     'updateelement': function(event, color) {
@@ -68,9 +68,24 @@ td, th {
 footer {
   clear: both;
 }
+
+#ColorSquares div {
+  width:  100px;
+  height: 100px;
+  float: left;
+}
+#ColorSquares div canvas {
+  border: solid 1px black;
+}
 </style>
 </head>
 <body>
+<div id="ColorSquares">
+  <div data-colorinput-type="red-green-square"></div>
+  <div data-colorinput-type="green-blue-square"></div>
+  <div data-colorinput-type="blue-red-square"></div>
+</div>
+
 <div id="ColorPreview"></div>
 <div id="ColorInputs">
 <table class="colors">
