@@ -370,13 +370,13 @@ do ($) =>
 
       @options = $.extend({
         type: @element.data('colorpicker-type') ? 'css'
-        format: @element.data('colorpicker-format')
+        css_format: @element.data('colorpicker-css-format')
       }, @options)
 
-      if @options.format == undefined
-        @options.format = []
-      else if $.type(@options.format) == 'string'
-        @options.format = @options.format.split(':')
+      if @options.css_format == undefined
+        @options.css_format = []
+      else if $.type(@options.css_format) == 'string'
+        @options.css_format = @options.css_format.split(':')
 
       @_impl = @_getColorInputImpl(@options.type)
 
@@ -418,20 +418,21 @@ do ($) =>
   class AbstractColorInputImpl
     constructor: (@_this) ->
     type: -> @_this.option('type')
-    format: -> @_this.option('format')
     element: -> @_this.element
     color: -> @_this.option('color')
 
 
   class CssColorInputImpl extends AbstractColorInputImpl
     updateElement: (color) ->
-      name = (color.name() if 'name' in @format())
-      hex3 = (color.hex3() if 'hex3' in @format())
-      rgb  = (color.rgb() if 'rgb' in @format())
+      name = (color.name() if 'name' in @css_format())
+      hex3 = (color.hex3() if 'hex3' in @css_format())
+      rgb  = (color.rgb() if 'rgb' in @css_format())
       @element().val(name ? hex3 ? rgb ? color.hex())
 
     colorFromElement: ->
       Color.fromCSS(@element().val())
+
+    css_format: -> @_this.option('css_format')
 
 
   class AttrColorInputImpl extends AbstractColorInputImpl
