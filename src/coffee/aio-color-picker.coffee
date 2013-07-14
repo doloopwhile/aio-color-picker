@@ -376,7 +376,7 @@ do ($) =>
       if @options.css_format == undefined
         @options.css_format = []
       else if $.type(@options.css_format) == 'string'
-        @options.css_format = @options.css_format.split(':')
+        @options.css_format = @options.css_format.split(/\s+/)
 
       @_impl = @_getColorInputImpl(@options.type)
 
