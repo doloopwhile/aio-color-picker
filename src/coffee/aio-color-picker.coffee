@@ -332,8 +332,8 @@ do ($) =>
   $.widget 'ui.colorwidget',
     _create: ->
       @options = $.extend({
-        color: @element.data('colorpicker-color') ? new Color
-        group: @element.data('colorpicker-group')
+        color: @element.data('colorinput-color') ? new Color
+        group: @element.data('colorinput-group')
       }, @options)
 
       @_trigger 'updateelement', null, @option('color')
@@ -369,8 +369,8 @@ do ($) =>
         return
 
       @options = $.extend({
-        type: @element.data('colorpicker-type') ? 'css'
-        css_format: @element.data('colorpicker-css-format')
+        type: @element.data('colorinput-type') ? 'css'
+        css_format: @element.data('colorinput-css-format')
       }, @options)
 
       if @options.css_format == undefined
