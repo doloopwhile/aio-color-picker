@@ -3,12 +3,17 @@ do ($) =>
 
   class ColorHolder
     constructor: (@_color) ->
+      @_observers = []
 
     updateColor: (new_color) ->
       if new_color.equals(@_color)
         return
       @_color = new_color
-      $(this).trigger('change', new_color)
+      for widget in @_observers
+        widget.option 'color', new_color
+
+    addObserver: (widget) ->
+      @_observers.push widget
 
   class Color
     constructor: (r=0, g=0, b=0, a=1.0) ->
@@ -106,18 +111,19 @@ do ($) =>
 
     replace: (element_name, value) ->
       e = element_name.toLowerCase()
-      color = Object.clone(this)
+
+      [r, g, b, a] = [@r, @g, @b, @a]
       switch e
         when 'red'
-          color.r = value
+          r = value
         when 'blue'
-          color.b = value
+          b = value
         when 'green'
-          color.g = value
+          g = value
         when 'alpha'
-          color.a = value
+          a = value
         when 'hue', 'saturation', 'value'
-          [h, s, v] = rgb_to_hsv(@r, @g, @b)
+          [h, s, v] = rgb_to_hsv(r, g, b)
           switch e
             when 'hue'
               h = value
@@ -125,11 +131,12 @@ do ($) =>
               s = value
             when 'value'
               v = value
-          [color.r, color.g, color.b] = hsv_to_rgb(h, s, v)
-      color
+          [r, g, b] = hsv_to_rgb(h, s, v)
+      new Color(r, g, b, a)
 
     equals: (other) ->
-      Object.equals(this, other)
+      # Object.equals(this, other)
+      @r == other.r and @g == other.g and @b == other.b and @a == other.a
 
   in_range = (x, min, max) =>
     return min if x < min
@@ -338,8 +345,7 @@ do ($) =>
 
       @_trigger 'updateelement', null, @option('color')
 
-      $(@_getRoot()).on 'change', (event, color) =>
-        @option 'color', color
+      @_getRoot().addObserver(@)
 
     _getRoot: () ->
       root = GroupRoots[@options.group] ?= new ColorHolder(@options.color)
@@ -354,8 +360,7 @@ do ($) =>
       else
         new_color = value
 
-      old_color = @option('color')
-      if new_color.equals(old_color)
+      if @options.color.equals new_color
         return
 
       @options.color = new_color
@@ -489,13 +494,47 @@ do ($) =>
     constructor: (@_this) ->
 
     init: ->
+      @_this.options.updateelement = (event, color) =>
+        c = @colorFromElement()
+        if c? and c.equals(color)
+          return
+        @updateElement(color)
+
       @canvas = $('<canvas></canvas>')
       @canvas.get(0).width  = @_this.element.width()
       @canvas.get(0).height = @_this.element.height()
       @_this.element.append(@canvas)
 
-    updateElement: (color) ->
-      colors = switch @_this.options.type
+      @_this._super()
+
+      on_press_or_move = (event) =>
+        attrs = @attrs()
+
+        x = (event.pageX - @canvas.offset().left) / @canvas.width()
+        y = 1 - (event.pageY - @canvas.offset().top) / @canvas.height()
+        x = to_unit_value(x)
+        y = to_unit_value(y)
+
+        color = @_this.option('color')
+        new_color = color \
+          .replace(attrs[0], Math.round(255 * x)) \
+          .replace(attrs[1], Math.round(255 * y))
+
+        if new_color.equals color
+          return
+        @_this._setOption 'color', new_color
+
+      @canvas.on 'mousedown', (event) =>
+        if 1 & event.buttons == 0
+          return
+
+        on_press_or_move(event)
+        $(document).on 'mousemove', on_press_or_move
+        $(document).on 'mouseup', =>
+          $(document).off 'mousemove', on_press_or_move
+
+    attrs: ->
+      switch @_this.options.type
         when 'red-green-square'
           ['red', 'green', 'blue']
         when 'green-blue-square'
@@ -503,13 +542,13 @@ do ($) =>
         when 'blue-red-square'
           ['blue', 'red', 'green']
 
-      image1 = new Image
-      image2 = new Image
-      image1.src = GradImageSrc[colors[0]]
-      image2.src = GradImageSrc[colors[1]]
-
+    updateElement: (color) ->
+      attrs = @attrs()
       width  = @_this.element.width()
       height = @_this.element.height()
+
+      image1 = new Image
+      image2 = new Image
 
       onload = [false, false]
       image1.onload = =>
@@ -523,6 +562,7 @@ do ($) =>
         ctx = @canvas.get(0).getContext('2d')
         ctx.save()
         ctx.scale width / 256, height / 256
+
         ctx.drawImage image1, 0, 0, 255, 255
 
         ctx.globalCompositeOperation = 'lighter'
@@ -532,17 +572,18 @@ do ($) =>
         ctx.drawImage image2, 0, 0, 255, 255
         ctx.restore()
 
+        ctx.globalCompositeOperation = 'lighter'
         ctx.fillStyle = {
           'red':   '#F00',
           'green': '#0F0',
           'blue':  '#00F',
-        }[colors[2]];
-        ctx.globalAlpha = color.get(colors[2])
+        }[attrs[2]];
+        ctx.globalAlpha = color.get(attrs[2]) / 255
         ctx.fillRect 0, 0, 255, 255
         ctx.restore()
 
-        x = color.get(colors[0]) / 255 * width
-        y = (255 - color.get(colors[1])) / 255 * height
+        x = color.get(attrs[0]) / 255 * width
+        y = (1 - color.get(attrs[1]) / 255) * height
 
         ctx.save()
         ctx.globalAlpha = 1
@@ -558,7 +599,8 @@ do ($) =>
         ctx.arc(x, y, 8, 0, 2 * Math.PI)
         ctx.stroke()
 
-        ctx.stroke()
+      image1.src = GradImageSrc[attrs[0]]
+      image2.src = GradImageSrc[attrs[1]]
 
     colorFromElement: ->
       null
