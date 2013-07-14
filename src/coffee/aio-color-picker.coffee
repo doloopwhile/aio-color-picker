@@ -363,7 +363,7 @@ do ($) =>
       @_getRoot().updateColor(new_color)
       @_trigger 'colorwidgetchange', null, new_color
 
-  $.widget 'ui.colorinput', $.ui.colorwidget,
+  $.widget 'ui._abstractcolorinput', $.ui.colorwidget,
     _create: ->
       if not @element.is('input[type=text]')
         return
@@ -378,13 +378,18 @@ do ($) =>
       else if $.type(@options.format) == 'string'
         @options.format = @options.format.split(':')
 
+      @_impl = @_getColorInputImpl(@options.type)
+
       @options.updateelement = (event, color) =>
-        @_updateElement(color)
+        c = @_impl.colorFromElement()
+        if c? and c.equals(color)
+          return
+        @_impl.updateElement(color)
 
       @_super()
 
       @element.on 'change', =>
-        new_color = @_colorFromElement()
+        new_color = @_impl.colorFromElement()
         if not new_color?
           return
         color = @option 'color'
@@ -392,49 +397,66 @@ do ($) =>
           return
         @_setOption 'color', new_color
 
-    _updateElement: (color) ->
-      c = @_colorFromElement()
-      if c? and c.equals(color)
-        return
+  $.widget 'ui.colorinput', $.ui._abstractcolorinput,
+    _getColorInputImpl: (type) ->
+      type = type.toLowerCase()
 
-      type = @option 'type'
-      format = @option 'format'
-      switch type
-        when 'css'
-          name = (color.name() if 'name' in format)
-          hex3 = (color.hex3() if 'hex3' in format)
-          rgb  = (color.rgb() if 'rgb' in format)
-          @element.val(name ? hex3 ? rgb ? color.hex())
-        when 'red', 'green', 'blue'
-          v = color.get type
-          if 'hex' in  format
-            v = ('00' + v.toString(16)).slice(-2)
-          else
-            v = v.toString()
-          @element.val(v)
-        else
-          @element.val(color.get(type))
-
-    _colorFromElement: ->
-      type = @options.type
-      color = @options.color
-      val = $.trim(@element.val())
-
+      attr_types = '''
+        red green blue
+        redhex greenhex bluehex
+        alpha
+        hue saturation value
+      '''.split(/\s+/)
       if type == 'css'
-        if val != ''
-          Color.fromCSS(val)
-        else
-          null
+        new CssColorInputImpl(this)
+      else if type in attr_types
+        new AttrColorInputImpl(this)
       else
-        v = switch type
-          when 'red', 'green', 'blue'
-            if 'hex' in @options.format
-              parseInt(val, 16)
-            else
-              parseInt val
-          else
-            parseFloat val
-        if isNaN(v)
-          return null
-        color.replace type, v
+        throw new ValueError
+
+
+  class AbstractColorInputImpl
+    constructor: (@_this) ->
+    type: -> @_this.option('type')
+    format: -> @_this.option('format')
+    element: -> @_this.element
+    color: -> @_this.option('color')
+
+
+  class CssColorInputImpl extends AbstractColorInputImpl
+    updateElement: (color) ->
+      name = (color.name() if 'name' in @format())
+      hex3 = (color.hex3() if 'hex3' in @format())
+      rgb  = (color.rgb() if 'rgb' in @format())
+      @element().val(name ? hex3 ? rgb ? color.hex())
+
+    colorFromElement: ->
+      Color.fromCSS(@element().val())
+
+
+  class AttrColorInputImpl extends AbstractColorInputImpl
+    updateElement: (color) ->
+      v = color.get(@type())
+      text = switch @type()
+        when 'red', 'green', 'blue'
+          v.toString()
+        when 'redhex', 'greenhex', 'bluehex'
+          ('00' + v.toString(16)).slice(-2)
+        else
+          v.toString()
+      @element().val(text)
+
+    colorFromElement: ->
+      val = $.trim(@element().val())
+
+      v = switch @type()
+        when 'red', 'green', 'blue'
+          parseInt val
+        when 'redhex', 'greenhex', 'bluehex'
+          parseInt val, 16
+        else
+          parseFloat val
+      if isNaN(v)
+        return null
+      @color().replace(@type(), v)
 
