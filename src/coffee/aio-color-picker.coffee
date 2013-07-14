@@ -370,15 +370,10 @@ do ($) =>
 
       @options = $.extend({
         type: @element.data('colorinput-type') ? 'css'
-        css_format: @element.data('colorinput-css-format')
       }, @options)
 
-      if @options.css_format == undefined
-        @options.css_format = []
-      else if $.type(@options.css_format) == 'string'
-        @options.css_format = @options.css_format.split(/\s+/)
-
       @_impl = @_getColorInputImpl(@options.type)
+      @_impl.init()
 
       @options.updateelement = (event, color) =>
         c = @_impl.colorFromElement()
@@ -407,22 +402,41 @@ do ($) =>
         alpha
         hue saturation value
       '''.split(/\s+/)
+
+      square_types = '''
+        red-green-square
+        green-blue-square
+        blue-red-square
+      '''.split(/\s+/)
+
       if type == 'css'
         new CssColorInputImpl(this)
       else if type in attr_types
         new AttrColorInputImpl(this)
+      else if type in square_types
+        new ColorSquareImpl(this)
       else
         throw new ValueError
 
 
   class AbstractColorInputImpl
     constructor: (@_this) ->
+    init: ->
     type: -> @_this.option('type')
     element: -> @_this.element
     color: -> @_this.option('color')
+    updateElement: (color) -> abstract
+    colorFromElement: -> abstract
 
 
   class CssColorInputImpl extends AbstractColorInputImpl
+    init: ->
+      @_this.options.css_format ?= @element().data('colorinput-css-format')
+      if @_this.options.css_format == undefined
+        @_this.options.css_format = []
+      else if $.type(@_this.options.css_format) == 'string'
+        @_this.options.css_format = @_this.options.css_format.split(/\s+/)
+
     updateElement: (color) ->
       name = (color.name() if 'name' in @css_format())
       hex3 = (color.hex3() if 'hex3' in @css_format())
@@ -432,12 +446,19 @@ do ($) =>
     colorFromElement: ->
       Color.fromCSS(@element().val())
 
-    css_format: -> @_this.option('css_format')
+    css_format: ->
+      @_this.option('css_format')
 
 
   class AttrColorInputImpl extends AbstractColorInputImpl
     updateElement: (color) ->
-      v = color.get(@type())
+      t = {
+        redhex: 'red',
+        greenhex: 'green',
+        bluehex: 'blue',
+      }[@type()] or @type()
+      v = color.get t
+
       text = switch @type()
         when 'red', 'green', 'blue'
           v.toString()
@@ -459,5 +480,11 @@ do ($) =>
           parseFloat val
       if isNaN(v)
         return null
-      @color().replace(@type(), v)
 
+      t = {
+        redhex: 'red',
+        greenhex: 'green',
+        bluehex: 'blue',
+      }[@type()] or @type()
+
+      @color().replace(t, v)
