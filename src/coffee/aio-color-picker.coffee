@@ -106,18 +106,19 @@ do ($) =>
 
     replace: (element_name, value) ->
       e = element_name.toLowerCase()
-      color = Object.clone(this)
+
+      [r, g, b, a] = [@r, @g, @b, @a]
       switch e
         when 'red'
-          color.r = value
+          r = value
         when 'blue'
-          color.b = value
+          b = value
         when 'green'
-          color.g = value
+          g = value
         when 'alpha'
-          color.a = value
+          a = value
         when 'hue', 'saturation', 'value'
-          [h, s, v] = rgb_to_hsv(@r, @g, @b)
+          [h, s, v] = rgb_to_hsv(r, g, b)
           switch e
             when 'hue'
               h = value
@@ -125,8 +126,8 @@ do ($) =>
               s = value
             when 'value'
               v = value
-          [color.r, color.g, color.b] = hsv_to_rgb(h, s, v)
-      color
+          [r, g, b] = hsv_to_rgb(h, s, v)
+      new Color(r, g, b, a)
 
     equals: (other) ->
       Object.equals(this, other)
@@ -503,25 +504,30 @@ do ($) =>
       @_this._super()
 
       on_press_or_move = (event) =>
-        if 1 & event.buttons == 0
-          return
-
         attrs = @attrs()
 
-        x = event.clientX - @canvas.offset().left
-        y = event.clientY - @canvas.offset().top
+        x = (event.pageX - @canvas.offset().left) / @canvas.width()
+        y = 1 - (event.pageY - @canvas.offset().top) / @canvas.height()
+        x = to_unit_value(x)
+        y = to_unit_value(y)
 
         color = @_this.option('color')
         new_color = color \
-          .replace(attrs[0], x / @canvas.width()) \
-          .replace(attrs[1], (1 - y / @canvas.height()))
+          .replace(attrs[0], Math.round(255 * x)) \
+          .replace(attrs[1], Math.round(255 * y))
 
         if new_color.equals color
           return
         @_this._setOption 'color', new_color
 
-      @canvas.on 'mousedown', on_press_or_move
-      @canvas.on 'mousemove', on_press_or_move
+      @canvas.on 'mousedown', (event) =>
+        if 1 & event.buttons == 0
+          return
+
+        on_press_or_move(event)
+        $(document).on 'mousemove', on_press_or_move
+        $(document).on 'mouseup', =>
+          $(document).off 'mousemove', on_press_or_move
 
     attrs: ->
       switch @_this.options.type
@@ -568,12 +574,12 @@ do ($) =>
           'green': '#0F0',
           'blue':  '#00F',
         }[attrs[2]];
-        ctx.globalAlpha = color.get(attrs[2])
+        ctx.globalAlpha = color.get(attrs[2]) / 255
         ctx.fillRect 0, 0, 255, 255
         ctx.restore()
 
-        x = color.get(attrs[0]) * width
-        y = (1 - color.get(attrs[1])) * height
+        x = color.get(attrs[0]) / 255 * width
+        y = (1 - color.get(attrs[1]) / 255) * height
 
         ctx.save()
         ctx.globalAlpha = 1

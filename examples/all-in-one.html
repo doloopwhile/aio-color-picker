@@ -17,7 +17,7 @@ $(function() {
 
   $('#ColorPreview').colorwidget({group: 1,
     'updateelement': function(event, color) {
-      $(this).css("background-color", color.toString());
+      $(this).css("background-color", color.hex());
     }
   });
 
@@ -75,13 +75,15 @@ footer {
   visibility: hidden;
 }
 
-#ColorSquares {
-  height: 100px;
-}
+/* #ColorSquares { */
+/*   height: 100px; */
+/* } */
 
 #ColorSquares div {
-  width:  100px;
-  height: 100px;
+  margin-left: 50px;
+  margin-top: 50px;
+  width:  200px;
+  height: 200px;
   float: left;
 }
 
